@@ -1,5 +1,7 @@
 from pathlib import Path
 from html import escape
+import json
+import os
 ROOT=Path('dist')
 OFF='https://www.ieor.iitb.ac.in'
 NAV=[('Academics','/academics/'),('Admissions','/admissions/'),('Research','/research/'),('People','/people/'),('Opportunities','/opportunities/'),('About','/about/')]
@@ -89,4 +91,12 @@ write('news-events',page('News & events','Talks, workshops, research stories and
 body=f'''<div class="page-body"><section><div class="wrap mini-grid"><div><div class="eyebrow">Visit us</div><h2>IEOR Building</h2><p>Department of Industrial Engineering and Operations Research<br>Room 105, First Floor, IEOR Building<br>Indian Institute of Technology Bombay<br>Powai, Mumbai 400076, India</p><p><a href="mailto:office.ieor@iitb.ac.in">office.ieor@iitb.ac.in</a><br><a href="tel:+912225767651">+91 22 2576 7651</a> / <a href="tel:+912225767652">+91 22 2576 7652</a></p><a class="button button-blue" href="{ext('/misc/contact')}">Current contact page</a></div><div class="image-frame"><img src="/assets/building.jpg" alt="Exterior of the IEOR department building" loading="lazy"></div></div></section><section><div class="wrap mini-grid"><div><h2>Find the right information</h2>{linklist([('Admissions information','/admissions/'),('Faculty and staff directory','/people/'),('Research collaboration','/opportunities/')])}</div><div><h2>Campus</h2><p>IEOR is located on the IIT Bombay campus in Powai, Mumbai.</p>{linklist([('IIT Bombay','https://www.iitb.ac.in/'),('Department website',OFF)])}</div></div></section></div>'''
 write('contact',page('Contact IEOR','Reach the Department of Industrial Engineering and Operations Research at IIT Bombay.',body))
 
+# Separate review shells leave public pages free of review controls.
+shell = Path('review-shell.html').read_text(encoding='utf8')
+for mode in ('a', 'b'):
+ write('review/' + mode, shell.replace('__MODE__', mode))
+config_path = ROOT / 'assets/review-config.js'
+if 'IEOR_REVIEW_API_URL' in os.environ or not config_path.exists():
+ api_base = os.environ.get('IEOR_REVIEW_API_URL', '').rstrip('/')
+ config_path.write_text('window.IEOR_REVIEW_API_BASE = ' + json.dumps(api_base) + ';\n', encoding='utf8')
 print('generated',len(list(ROOT.rglob('index.html'))),'pages')

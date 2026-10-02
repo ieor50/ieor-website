@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Website review · IEOR IIT Bombay</title>
+<script>
+(() => {
+  const mode = 'a', key = `ieor-review-${mode}`;
+  const params = new URLSearchParams(location.search);
+  let token = params.has('token') ? params.get('token') : sessionStorage.getItem(key);
+  history.replaceState(null, '', location.pathname);
+  window.ieorReview = { mode, token: token || '', key };
+})();
+</script>
+<link rel="stylesheet" href="/assets/review.css">
+<script src="/assets/review-config.js" defer></script>
+<script src="/assets/review.js" defer></script>
+</head>
+<body>
+<header class="review-bar">
+  <a class="review-brand" href="/" id="exit-review"><strong>IEOR</strong><span>Website review</span></a>
+  <span id="current-page">Preparing your review</span>
+  <div class="review-actions" id="review-actions" hidden>
+    <button id="general-feedback" type="button">Give feedback</button>
+  </div>
+</header>
+<main id="gate">
+  <p class="eyebrow">IEOR · IIT Bombay</p>
+  <h1 id="gate-title">Opening your review.</h1>
+  <p id="gate-message" role="status">Checking your link. This takes a moment.</p>
+  <button id="retry" type="button" hidden>Try again</button>
+</main>
+<iframe id="site-frame" title="IEOR website being reviewed" hidden sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+<p id="selection-help" hidden>Comment mode: click an element to give feedback. Switch to Browse to follow links.</p>
+<dialog id="feedback-dialog" aria-labelledby="feedback-title">
+  <form id="feedback-form">
+    <div class="dialog-heading"><p class="eyebrow">Website review</p><button type="button" id="close-feedback" aria-label="Close feedback">×</button></div>
+    <h2 id="feedback-title">Your feedback</h2>
+    <p id="feedback-context"></p>
+    <label for="review-name">Name <span>(optional)</span></label>
+    <input id="review-name" name="author" maxlength="120" autocomplete="name">
+    <label for="review-comment">What should we improve?</label>
+    <textarea id="review-comment" name="comment" required maxlength="5000" rows="6" placeholder="Tell us what works, what is missing, or what needs to change."></textarea>
+    <p class="privacy-note">Feedback goes privately to the website team.</p>
+    <p id="feedback-status" role="status" aria-live="polite"></p>
+    <button type="submit" id="send-feedback">Send feedback</button>
+  </form>
+</dialog>
+<div id="confirmation" role="status" aria-live="polite"></div>
+</body>
+</html>

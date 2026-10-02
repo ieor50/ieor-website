@@ -1,0 +1,5 @@
+{
+  "name": "ieor-website", "private": true, "type": "module",
+  "scripts": { "build": "python3 build_pages.py", "review:local": "node scripts/review-local.mjs", "test": "node --test test/*.test.mjs" },
+  "devDependencies": { "@playwright/test": "^1.56.0" }
+}
