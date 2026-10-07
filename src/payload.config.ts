@@ -13,6 +13,7 @@ import { People } from './collections/People'
 import { Posts } from './collections/Posts'
 import { Publications } from './collections/Publications'
 import { Users } from './collections/Users'
+import { resendAdapter } from './lib/email'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -24,6 +25,7 @@ export default buildConfig({
   },
   collections: [Pages, People, Courses, Posts, Publications, Media, Users],
   editor: lexicalEditor(),
+  email: resendAdapter,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
   db: postgresAdapter({
