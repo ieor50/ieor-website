@@ -8,5 +8,10 @@ export const Users: CollectionConfig = {
   slug: 'users',
   admin: { useAsTitle: 'email' },
   auth: true,
-  fields: [{ name: 'role', type: 'select', required: true, defaultValue: 'editor', options: [...ROLES] }],
+  fields: [
+    { name: 'role', type: 'select', required: true, defaultValue: 'editor', options: [...ROLES] },
+    // Magic link state: sha256 of the emailed token, single use, short expiry.
+    { name: 'loginTokenHash', type: 'text', hidden: true, index: true },
+    { name: 'loginTokenExpires', type: 'date', hidden: true },
+  ],
 }

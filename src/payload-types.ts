@@ -294,6 +294,8 @@ export interface Publication {
 export interface User {
   id: number;
   role: 'admin' | 'editor';
+  loginTokenHash?: string | null;
+  loginTokenExpires?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -538,6 +540,8 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
+  loginTokenHash?: T;
+  loginTokenExpires?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
