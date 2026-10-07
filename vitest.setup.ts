@@ -1,4 +1,4 @@
-// Any setup scripts you might need go here
+// Load env for int tests (.env.local holds the Vercel-pulled secrets).
+import { config } from 'dotenv'
 
-// Load .env files
-import 'dotenv/config'
+config({ path: ['.env.local', '.env'] })
