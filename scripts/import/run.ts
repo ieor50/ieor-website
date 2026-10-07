@@ -56,6 +56,7 @@ const report = {
     failedMedia: [] as { url: string; error: string }[],
     failedDocs: [] as { collection: string; key: string; error: string }[],
     personalPagesNotImported: [] as string[],
+    unclassified: [] as { nid: number; oldPath: string; title: string; path: string }[],
     jsRedirects: [] as { nid: number; to: string }[],
   },
   media: { referenced: 0, available: 0 },
@@ -120,7 +121,7 @@ function dateFor(n: ParsedNode): string {
 const items: Item[] = []
 const redirects: Redirect[] = []
 const claimed = new Set<number>()
-const listingNodes: { n: ParsedNode; to: string }[] = []
+const listingNodes: { n: ParsedNode; to: string; direct?: boolean }[] = []
 
 // People listed on listing pages; a linked Drupal node becomes that person's profile.
 const LISTINGS: { path: string; category: PeopleCategory; designation?: string; scholars?: boolean }[] = [
@@ -150,9 +151,16 @@ for (const l of LISTINGS) {
   }
 }
 
+const thinProfiles: ParsedNode[] = []
 for (const n of nodes) {
   if (claimed.has(n.nid)) continue
   const t = classify(n)
+  if ('collection' in t && t.collection === 'people' && t.thin) {
+    thinProfiles.push(n)
+    continue
+  }
+  if ('collection' in t && t.collection === 'pages' && t.unclassified)
+    report.notes.unclassified.push({ nid: n.nid, oldPath: n.canonicalPath, title: n.title, path: t.path })
   if ('drop' in t) {
     drop(t.reason, n.nid)
     if (t.drop === '410') for (const p of legacyOf(n)) redirects.push({ from: p, status: 410 })
@@ -161,7 +169,7 @@ for (const n of nodes) {
       report.notes.jsRedirects.push({ nid: n.nid, to: t.to! })
       listingNodes.push({ n, to: t.to! })
     } else if (t.reason === 'personal page') report.notes.personalPagesNotImported.push(n.canonicalPath)
-    else if (t.to) listingNodes.push({ n, to: t.to })
+    else if (t.to) listingNodes.push({ n, to: t.to, direct: t.reason === 'junk page' })
     continue
   }
   switch (t.collection) {
@@ -204,6 +212,17 @@ for (const n of nodes) {
     case 'publications':
       items.push({ kind: 'publications', title: n.title, slug: '', f: publicationFields(n), ...common(n) })
       break
+  }
+}
+// Near-empty profile pages: keep their URLs on a namesake's doc, else drop as junk.
+for (const n of thinProfiles) {
+  const dup = people.find((p) => slugify(p.seed.name) === slugify(personFromProfile(n).name))
+  if (dup) {
+    dup.legacyPaths = [...new Set([...dup.legacyPaths, ...legacyOf(n)])]
+    report.merged.people++
+  } else {
+    drop('junk page', n.nid)
+    listingNodes.push({ n, to: '/', direct: true })
   }
 }
 
@@ -315,9 +334,10 @@ const resolveOld = (abs: string): string | undefined => {
   const hit = oldToNew.get(p.toLowerCase())
   return hit ? hit + u.hash : undefined
 }
-for (const { n, to } of listingNodes) {
+for (const { n, to, direct } of listingNodes) {
   const abs = absolutize(to)
-  const target = abs.startsWith(OLD_HOST) ? resolveOld(abs) || stripHost(abs) : to.startsWith('/') ? to : abs
+  // direct: `to` is already a new path (junk pages sent to a parent or home).
+  const target = direct ? to : abs.startsWith(OLD_HOST) ? resolveOld(abs) || stripHost(abs) : to.startsWith('/') ? to : abs
   for (const p of legacyOf(n)) {
     redirects.push({ from: p, to: target, status: 301 })
     if (target.startsWith('/')) oldToNew.set(p.toLowerCase(), target)

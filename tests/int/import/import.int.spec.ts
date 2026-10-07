@@ -51,6 +51,33 @@ describe('classify', () => {
     expect(classify({ ...fixture(124), canonicalPath: '/~jayendran/teaching' })).toMatchObject({ drop: 'skip', reason: 'personal page' })
   })
 
+  it('places root-level and /node pages into sections', () => {
+    const page = (canonicalPath: string, title: string, nid = 9999, contentHtml = fixture(124).contentHtml) =>
+      classify({ ...fixture(124), nid, canonicalPath, title, contentHtml, images: [], files: [] })
+    expect(page('/node/2228', 'About Us', 2228)).toEqual({ collection: 'pages', section: 'about', path: '/about' })
+    expect(page('/misc/contact', 'Contact Us', 19)).toEqual({ collection: 'pages', section: 'about', path: '/contact' })
+    expect(page('/faq/phd-admissions', 'FAQ - Ph.D.')).toMatchObject({ section: 'resources', path: '/resources/faq/phd-admissions' })
+    expect(page('/archived-time-table-2015-jan', 'Archived Time Table for December-May 2015')).toMatchObject({
+      section: 'academics',
+      path: '/academics/timetable/archive/archived-time-table-for-december-may-2015',
+    })
+    expect(page('/timetable/2019', 'Time Table')).toMatchObject({ path: '/academics/timetable/2019' })
+    expect(page('/AlokSrivastava', 'Alok Kumar Srivastava')).toEqual({ collection: 'people' })
+    expect(page('/node/2227', 'Alumni Page')).toMatchObject({ section: 'people', path: '/people/alumni/alumni-page' })
+    expect(page('/node/2960', 'IE101 : Introduction to IE and OR')).toEqual({ collection: 'courses' })
+    expect(page('/goa', 'Goa')).toEqual({ collection: 'pages', section: 'misc', path: '/misc/goa', unclassified: true })
+  })
+
+  it('drops junk pages with a 301 to home or the parent page', () => {
+    const page = (canonicalPath: string, title: string, contentHtml = '<p>x</p>') =>
+      classify({ ...fixture(124), nid: 9999, canonicalPath, title, contentHtml, images: [], files: [] })
+    expect(page('/403error', 'Access Denied', fixture(124).contentHtml)).toMatchObject({ drop: 'skip', reason: 'junk page', to: '/' })
+    expect(page('/node/2133', 'Test Page', fixture(124).contentHtml)).toMatchObject({ reason: 'junk page' })
+    expect(page('/people/alumni/mtech/2018', 'Alumni 2018')).toMatchObject({ reason: 'junk page', to: '/people/alumni/mtech' })
+    expect(page('/research', 'Research')).toEqual({ collection: 'pages', section: 'research', path: '/research' })
+    expect(page('/node/3274', 'Shashank Jain', '')).toEqual({ collection: 'people', thin: true })
+  })
+
   it('maps paths and kinds', () => {
     expect(pagePathFor('/node/1507', 'August 2014 APS Schedule', 1507).path).toBe('/misc/august-2014-aps-schedule')
     expect(pagePathFor('/resource/Lab_Rules', 'x', 1).path).toBe('/resources/lab-rules')
