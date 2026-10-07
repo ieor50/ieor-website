@@ -1,4 +1,4 @@
-// Any setup scripts you might need go here
+// Load env the same way Next does locally (.env.local from vercel env pull)
+import { config } from 'dotenv'
 
-// Load .env files
-import 'dotenv/config'
+config({ path: ['.env.local', '.env'] })
