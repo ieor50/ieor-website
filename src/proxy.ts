@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import table from './data/redirects.json'
+import { GONE_HTML } from './components/gone'
 import { normalizePath } from './lib/legacy-path'
 import type { RedirectTable } from './lib/redirects'
 
 // Next 16 "proxy" (formerly middleware). Serves the legacy URL table and the admin login redirect.
 const redirects = new Map((table as RedirectTable).map((r) => [r.from, r]))
 
-const GONE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page removed | IEOR @ IIT Bombay</title></head><body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem"><h1>This page has been removed</h1><p>The content that used to be here is no longer published.</p><p><a href="/">Go to the IEOR home page</a></p></body></html>`
 
 export function proxy(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl
