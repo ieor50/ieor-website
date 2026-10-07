@@ -23,7 +23,7 @@ export const isOldFileUrl = (u: string) =>
 /** Absolute URL; any http/https, www/bare old-host URL is normalized to OLD_HOST. */
 export const absolutize = (href: string, base = OLD_HOST) => {
   try {
-    const u = new URL(href.trim(), base + '/')
+    const u = new URL(href.trim(), base)
     if (/^(www\.)?ieor\.iitb\.ac\.in$/i.test(u.hostname) && /^https?:$/.test(u.protocol))
       return OLD_HOST + u.pathname + u.search + u.hash
     return u.toString()
@@ -44,6 +44,7 @@ export function parseNode(html: string): ParsedNode | null {
   const nid = Number(main.attr('data-history-node-id'))
   const type = ($('body').attr('class') || '').match(/node--type-([a-z0-9_-]+)/)?.[1] || ''
   const canonical = $('link[rel=canonical]').attr('href') || `/node/${nid}`
+  const pageUrl = absolutize(canonical)
   const title = $('h1.title').first().text().replace(/\s+/g, ' ').trim()
 
   // Drop chrome that lives inside the article: comments and login links.
@@ -81,11 +82,11 @@ export function parseNode(html: string): ParsedNode | null {
   const images = new Set<string>()
   const files = new Set<string>()
   body.find('img[src]').each((_, el) => {
-    const u = absolutize($(el).attr('src')!)
+    const u = absolutize($(el).attr('src')!, pageUrl)
     if (isOldFileUrl(u)) images.add(u)
   })
   body.find('a[href]').each((_, el) => {
-    const u = absolutize($(el).attr('href')!)
+    const u = absolutize($(el).attr('href')!, pageUrl)
     if (isOldFileUrl(u) && FILE_EXT.test(new URL(u).pathname)) files.add(u)
   })
 

@@ -170,8 +170,13 @@ export function personFromProfile(n: ParsedNode): Omit<PersonSeed, 'order'> {
     .find((h) => h.length > 2 && h.length < 60)
   const img = n.images.find(isOldFileUrl)
   const areas = text.match(/Research Interests?\s*:?\s*(.{3,300}?)(?:\s{2,}|Supervisor|Contact|Publications|$)/i)?.[1]
+  // Titles like "Name | देवनागरी", "//Name", "Name (Homepage)" or just "About me".
+  let name = clean(n.title.split(' | ')[0])
+    .replace(/^[^\p{L}]+/u, '')
+    .replace(/\s*\(home ?page\)\s*$/i, '')
+  if (!name || /^about( me)?$/i.test(name)) name = decodeURIComponent(n.canonicalPath.split('/').pop() || '').replace(/[._-]+/g, ' ')
   return {
-    name: n.title,
+    name,
     category,
     designation: heading,
     email: findEmail(text),

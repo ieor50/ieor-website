@@ -2,9 +2,9 @@ import fs from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import { classify, pagePathFor, postKind } from '../../../scripts/import/classify'
-import { courseFields, findEmail, peopleFromListing, publicationFields } from '../../../scripts/import/extract'
+import { courseFields, findEmail, peopleFromListing, personFromProfile, publicationFields } from '../../../scripts/import/extract'
 import { toMarkdown } from '../../../scripts/import/markdown'
-import { parseNode } from '../../../scripts/import/parse'
+import { absolutize, parseNode } from '../../../scripts/import/parse'
 
 const fixture = (nid: number) => {
   const n = parseNode(fs.readFileSync(path.join(__dirname, 'fixtures', `${nid}.html`), 'utf8'))
@@ -22,6 +22,12 @@ describe('parseNode', () => {
     const pub = fixture(3295)
     expect(pub.fields).toMatchObject({ authors: 'Sambit Mohanty, Jaideep Roy', year: '2024' })
     expect(fixture(1008).created).toBe('2012-06-17T09:40:23+05:30')
+  })
+
+  it('normalizes old-host URLs to one form', () => {
+    expect(absolutize('http://ieor.iitb.ac.in/files/a.pdf')).toBe('https://www.ieor.iitb.ac.in/files/a.pdf')
+    expect(absolutize('../files/b.jpg', 'https://www.ieor.iitb.ac.in/acad/x')).toBe('https://www.ieor.iitb.ac.in/files/b.jpg')
+    expect(absolutize('https://example.org/x')).toBe('https://example.org/x')
   })
 
   it('detects JS redirect nodes and skips login redirects', () => {
@@ -87,6 +93,17 @@ describe('toMarkdown', () => {
 })
 
 describe('extract', () => {
+  it('reads profile pages and cleans their titles', () => {
+    expect(personFromProfile(fixture(1007))).toMatchObject({
+      name: 'Manu Gupta',
+      category: 'phd',
+      designation: 'Research Scholar',
+      email: 'manu.gupta@iitb.ac.in',
+      photoUrl: 'https://www.ieor.iitb.ac.in/files/images/DSC_0012.JPG',
+    })
+    expect(personFromProfile({ ...fixture(1007), title: '//Vibhav Kamath (Homepage)' }).name).toBe('Vibhav Kamath')
+  })
+
   it('normalizes obfuscated emails', () => {
     expect(findEmail('Email id: manu.gupta[AT]iitb.ac.in')).toBe('manu.gupta@iitb.ac.in')
     expect(findEmail('no email here')).toBeUndefined()
