@@ -1,4 +1,7 @@
 import type { CollectionConfig } from 'payload'
+import { contentAccess } from '../lib/access'
+import { revalidateHooks } from '../lib/hooks'
+import { publicationPath } from '../lib/paths'
 import { legacyFields, slugField } from './fields'
 
 export const PUB_TYPES = ['journal', 'conference', 'book', 'chapter', 'thesis', 'report', 'other'] as const
@@ -9,7 +12,8 @@ export const PUB_TYPES = ['journal', 'conference', 'book', 'chapter', 'thesis', 
 export const Publications: CollectionConfig = {
   slug: 'publications',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'year', 'pubType'] },
-  access: { read: () => true },
+  access: contentAccess,
+  hooks: revalidateHooks(publicationPath, ['/research/publications']),
   defaultSort: '-year',
   fields: [
     { name: 'title', type: 'text', required: true },
