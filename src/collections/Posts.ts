@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { contentAccess } from '../lib/access'
+import { revalidateHooks, uniquePostSlugPerYear } from '../lib/hooks'
+import { postPath } from '../lib/paths'
 import { bodyField, legacyFields, slugField } from './fields'
 
 export const POST_KINDS = [
@@ -18,6 +20,7 @@ export const Posts: CollectionConfig = {
   slug: 'posts',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'kind', 'date'] },
   access: contentAccess,
+  hooks: { ...revalidateHooks(postPath, ['/news', '/']), beforeValidate: [uniquePostSlugPerYear] },
   defaultSort: '-date',
   fields: [
     { name: 'title', type: 'text', required: true },

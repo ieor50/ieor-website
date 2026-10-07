@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { contentAccess } from '../lib/access'
+import { revalidateHooks } from '../lib/hooks'
+import { personPath } from '../lib/paths'
 import { bodyField, legacyFields, slugField } from './fields'
 
 export const PEOPLE_CATEGORIES = [
@@ -17,6 +19,7 @@ export const People: CollectionConfig = {
   slug: 'people',
   admin: { useAsTitle: 'name', defaultColumns: ['name', 'category', 'designation'] },
   access: contentAccess,
+  hooks: revalidateHooks(personPath, ['/people']),
   fields: [
     { name: 'name', type: 'text', required: true },
     { ...slugField, unique: true },
