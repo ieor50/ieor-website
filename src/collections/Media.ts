@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
+import { contentAccess } from '../lib/access'
 
 // Files live in S3 behind CloudFront (storage adapter wired in payload.config.ts).
 // `web` is the size the site renders; the original stays for download.
 export const Media: CollectionConfig = {
   slug: 'media',
-  access: { read: () => true },
+  access: contentAccess,
   fields: [
     { name: 'alt', type: 'text' },
     {

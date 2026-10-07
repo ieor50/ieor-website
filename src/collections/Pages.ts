@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { contentAccess } from '../lib/access'
 import { bodyField, legacyFields, slugField } from './fields'
 
 export const SECTIONS = [
@@ -16,7 +17,7 @@ export const SECTIONS = [
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'path', 'section', 'updatedAt'] },
-  access: { read: () => true },
+  access: contentAccess,
   fields: [
     { name: 'title', type: 'text', required: true },
     // ponytail: the full public path is the routing key and encodes hierarchy;

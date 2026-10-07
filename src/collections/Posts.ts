@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { contentAccess } from '../lib/access'
 import { bodyField, legacyFields, slugField } from './fields'
 
 export const POST_KINDS = [
@@ -16,7 +17,7 @@ export const POST_KINDS = [
 export const Posts: CollectionConfig = {
   slug: 'posts',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'kind', 'date'] },
-  access: { read: () => true },
+  access: contentAccess,
   defaultSort: '-date',
   fields: [
     { name: 'title', type: 'text', required: true },
