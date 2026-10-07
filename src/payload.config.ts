@@ -14,6 +14,7 @@ import { Posts } from './collections/Posts'
 import { Publications } from './collections/Publications'
 import { Users } from './collections/Users'
 import { resendAdapter } from './lib/email'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,6 +31,10 @@ export default buildConfig({
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URL || '' },
+    // ponytail: off until production gets its own Neon branch. The shared dev DB is
+    // schema-pushed (a batch -1 "dev" row), and Payload's migrate then blocks on an
+    // interactive prompt and exits. Set PAYLOAD_PROD_MIGRATIONS=true on a migrations-only DB.
+    prodMigrations: process.env.PAYLOAD_PROD_MIGRATIONS === 'true' ? migrations : undefined,
   }),
   sharp,
   plugins: [
