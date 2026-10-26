@@ -4,7 +4,7 @@ import { GONE_HTML } from './components/gone'
 import { normalizePath } from './lib/legacy-path'
 import type { Redirect, RedirectTable } from './lib/redirects'
 
-// Next 16 "proxy" (formerly middleware). Serves the legacy URL table and the admin login redirect.
+// Next 16 "proxy" (formerly middleware). Serves the legacy URL table and blocks /admin.
 const redirects = new Map((table as RedirectTable).map((r) => [r.from, r]))
 // Drupal matched aliases case-insensitively (/News/x and /news/x both worked). Exact case wins.
 const lowerRedirects = new Map<string, Redirect>()
@@ -16,13 +16,10 @@ for (const r of table as RedirectTable) {
 }
 
 export function proxy(req: NextRequest) {
-  const { pathname, searchParams } = req.nextUrl
+  const { pathname } = req.nextUrl
 
-  // Sign in is by magic link. The password form stays reachable at /admin/login?password=1
-  // (e2e tests and break-glass use).
-  if (pathname === '/admin/login') {
-    return searchParams.has('password') ? undefined : NextResponse.redirect(new URL('/login', req.url))
-  }
+  // ponytail: admin UI is off until it is rebuilt; delete this and the matcher entry to restore it.
+  if (/^\/admin(\/|$)/.test(pathname)) return new NextResponse('Not found', { status: 404 })
 
   const path = normalizePath(pathname)
   // Forum topics were dropped; every /forum/<id> listing goes to news like /forum itself.
@@ -39,5 +36,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/login', '/((?!admin(?:/|$)|api/|_next/|assets/|favicon\\.ico$).*)'],
+  matcher: ['/admin', '/admin/:path*', '/((?!admin(?:/|$)|api/|_next/|assets/|favicon\\.ico$).*)'],
 }
