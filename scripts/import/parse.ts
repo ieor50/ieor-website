@@ -85,8 +85,8 @@ export function parseNode(html: string): ParsedNode | null {
     const u = absolutize($(el).attr('src')!, pageUrl)
     if (isOldFileUrl(u)) images.add(u)
   })
-  body.find('a[href]').each((_, el) => {
-    const u = absolutize($(el).attr('href')!, pageUrl)
+  body.find('a[href], iframe[src]').each((_, el) => {
+    const u = absolutize($(el).attr('href') ?? $(el).attr('src')!, pageUrl)
     if (isOldFileUrl(u) && FILE_EXT.test(new URL(u).pathname)) files.add(u)
   })
 

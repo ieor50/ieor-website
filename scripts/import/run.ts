@@ -1,6 +1,6 @@
 // Import the Drupal crawl into Payload. Idempotent: upserts by drupalNid (people
 // without a node by slug), skips media already present by sourceUrl.
-//   npx payload run scripts/import/run.ts -- [--limit N] [--no-media] [--dry] [--prune]
+//   npx payload run scripts/import/run.ts -- [--limit N] [--no-media] [--dry] [--prune] [--nids 1,2]
 // The `--` matters: `payload run` swallows flags placed before it.
 import fs from 'fs'
 import path from 'path'
@@ -11,6 +11,7 @@ import type { Redirect } from '../../src/lib/redirects'
 import { classify, isPersonalPage, segments, type PeopleCategory, type PostKind, type Section } from './classify'
 import { CRAWL_DIR } from './config'
 import {
+  studentsByProgram,
   courseFields,
   peopleFromListing,
   personFromProfile,
@@ -31,6 +32,8 @@ const argVal = (name: string) => {
 const LIMIT = Number(argVal('--limit')) || Infinity
 const NO_MEDIA = args.includes('--no-media')
 const DRY = args.includes('--dry')
+// --nids 1,2,3: upsert only these nodes (quick fix-ups). Redirects and the report are still built in full.
+const ONLY = args.includes('--nids') ? new Set(args[args.indexOf('--nids') + 1].split(',').map(Number)) : undefined
 const ROOT = process.cwd()
 
 type Common = { nids: number[]; legacyPaths: string[]; html: string; images: string[]; files: string[] }
@@ -46,7 +49,7 @@ const report = {
   limit: Number.isFinite(LIMIT) ? LIMIT : null,
   crawl: { files: 0, nodeViews: 0, notNodeViews: [] as number[] },
   counts: {} as Record<string, { items: number; created: number; updated: number; failed: number }>,
-  merged: { publications: 0, courses: 0, people: 0 },
+  merged: { publications: 0, courses: 0, people: 0, pages: 0, posts: 0 },
   pruned: {} as Record<string, number>,
   dropped: {} as Record<string, number[]>,
   notes: {
@@ -79,6 +82,27 @@ for (const f of fs.readdirSync(path.join(CRAWL_DIR, 'nodes'))) {
   else nodes.push(n)
 }
 nodes.sort((a, b) => a.nid - b.nid)
+// Several pages can share one alias (stale copies). Keep the one Drupal served at that alias
+// in the link crawl; same-title pages survive only as /node/N aliases of it. Anything else
+// (a different post, a retitled page) stays its own doc and gets a -<nid> path as before.
+const byAlias = new Map<string, ParsedNode[]>()
+for (const n of nodes) {
+  const k = n.canonicalPath.toLowerCase()
+  if (!k.startsWith('/node/')) (byAlias.get(k) || byAlias.set(k, []).get(k)!).push(n)
+}
+for (const [alias, group] of byAlias) {
+  if (group.length < 2) continue
+  const file = path.join(CRAWL_DIR, 'pages/www.ieor.iitb.ac.in', alias)
+  const html = fs.existsSync(file) ? fs.readFileSync(fs.statSync(file).isDirectory() ? `${file}/index.html` : file, 'utf8') : ''
+  const live = group.find((n) => html.includes(`data-history-node-id="${n.nid}"`))
+  if (!live) continue
+  for (const n of group) {
+    if (n === live || n.type !== 'page' || live.type !== 'page' || slugify(n.title) !== slugify(live.title)) continue
+    nodes.splice(nodes.indexOf(n), 1)
+    ;(aliasNids.get(live.nid) || aliasNids.set(live.nid, []).get(live.nid)!).push(n.nid, ...(aliasNids.get(n.nid) || []))
+    drop('superseded duplicate', n.nid)
+  }
+}
 report.crawl.nodeViews = nodes.length
 report.crawl.notNodeViews.sort((a, b) => a - b)
 
@@ -174,7 +198,8 @@ for (const n of nodes) {
   }
   switch (t.collection) {
     case 'pages':
-      items.push({ kind: 'pages', title: n.title, path: t.path, section: t.section, slug: '', ...common(n) })
+      // /students is a JS-filtered table on the old site; split it per program instead.
+      items.push({ kind: 'pages', title: n.title, path: t.path, section: t.section, slug: '', ...common(n, n.canonicalPath === '/students' ? studentsByProgram(n.contentHtml) : n.contentHtml) })
       break
     case 'people': {
       const seed = personFromProfile(n)
@@ -264,8 +289,40 @@ for (const p of items.filter((i): i is PubItem => i.kind === 'publications').sor
   }
 }
 
-const pages = items.filter((i): i is PageItem => i.kind === 'pages')
-const posts = items.filter((i): i is PostItem => i.kind === 'posts')
+// Drupal holds verbatim copies (every research topic page, many seminar posts): same title,
+// near-identical text. Keep the newest node; older copies become its aliases. Posts must also
+// be within 60 days of each other, so a recurring announcement in another year stays separate.
+const words = (html: string) => new Set(html.replace(/<[^>]+>/g, ' ').toLowerCase().match(/[a-z0-9]+/g) ?? [])
+const sameText = (a: Set<string>, b: Set<string>) => {
+  let n = 0
+  for (const w of a) if (b.has(w)) n++
+  return n / Math.max(1, a.size + b.size - n) >= 0.9
+}
+const DAY = 86_400_000
+const copies = new Set<Item>()
+for (const kind of ['pages', 'posts'] as const) {
+  const groups = new Map<string, (PageItem | PostItem)[]>()
+  for (const i of items)
+    if (i.kind === kind) (groups.get(slugify(i.title)) || groups.set(slugify(i.title), []).get(slugify(i.title))!).push(i)
+  for (const g of groups.values()) {
+    if (g.length < 2) continue
+    g.sort((a, b) => b.nids[0] - a.nids[0])
+    const text = new Map(g.map((i) => [i, words(i.html)]))
+    for (const [ix, keep] of g.entries()) {
+      if (copies.has(keep)) continue
+      for (const other of g.slice(ix + 1)) {
+        if (copies.has(other) || !sameText(text.get(keep)!, text.get(other)!)) continue
+        if (keep.kind === 'posts' && other.kind === 'posts' && Math.abs(Date.parse(keep.date) - Date.parse(other.date)) > 60 * DAY) continue
+        mergeInto(keep, other)
+        copies.add(other)
+        report.merged[kind]++
+      }
+    }
+  }
+}
+
+const pages = items.filter((i): i is PageItem => i.kind === 'pages' && !copies.has(i))
+const posts = items.filter((i): i is PostItem => i.kind === 'posts' && !copies.has(i))
 
 // Frontend routes that a page path must never shadow.
 const RESERVED_PATHS = new Set(['/', '/people', '/news', '/academics/courses', '/research/publications', '/login', '/admin', '/api'])
@@ -419,7 +476,7 @@ type Coll = 'pages' | 'people' | 'courses' | 'posts' | 'publications'
 // --prune (full runs only): delete imported docs this run no longer produces, e.g. a
 // node later merged into another. Runs before upserts so freed slugs can be reused.
 // Docs without a drupalNid (admin-created, or listing-only people) are never touched.
-if (payload && args.includes('--prune') && !Number.isFinite(LIMIT)) {
+if (payload && args.includes('--prune') && !Number.isFinite(LIMIT) && !ONLY) {
   for (const [collection, list] of Object.entries(all) as [Coll, Item[]][]) {
     const keepNids = new Set(list.map((i) => i.nids[0]).filter(Boolean))
     const docs = await payload.find({ collection, pagination: false, depth: 0 })
@@ -436,17 +493,22 @@ if (payload && args.includes('--prune') && !Number.isFinite(LIMIT)) {
 const pending: Promise<void>[] = []
 let active = 0
 const waiters: (() => void)[] = []
-async function upsert(collection: Coll, key: Record<string, unknown>, data: Record<string, unknown>) {
+async function upsert(collection: Coll, keys: Record<string, unknown>[], data: Record<string, unknown>) {
   const tally = (report.counts[collection] ||= { items: 0, created: 0, updated: 0, failed: 0 })
   tally.items++
-  if (!payload) return
+  if (!payload || (ONLY && !ONLY.has(data.drupalNid as number))) return
   if (active >= 6) await new Promise<void>((r) => waiters.push(r))
   active++
   try {
-    const where = Object.fromEntries(Object.entries(key).map(([k, v]) => [k, { equals: v }]))
-    const found = await payload.find({ collection, where, limit: 1, depth: 0 })
-    if (found.docs[0]) {
-      await payload.update({ collection, id: found.docs[0].id, data, context: { skipRevalidate: true } })
+    let doc: { id: number | string; drupalNid?: number | null } | undefined
+    for (const key of keys) {
+      const where = Object.fromEntries(Object.entries(key).map(([k, v]) => [k, { equals: v }]))
+      const hit = (await payload.find({ collection, where, limit: 1, depth: 0 })).docs[0]
+      // Never take over a doc that belongs to another node.
+      if (!doc && hit && (!hit.drupalNid || hit.drupalNid === data.drupalNid)) doc = hit
+    }
+    if (doc) {
+      await payload.update({ collection, id: doc.id, data, context: { skipRevalidate: true } })
       tally.updated++
     } else {
       await payload.create({ collection, data: data as never, context: { skipRevalidate: true } })
@@ -454,7 +516,7 @@ async function upsert(collection: Coll, key: Record<string, unknown>, data: Reco
     }
   } catch (e) {
     tally.failed++
-    report.notes.failedDocs.push({ collection, key: JSON.stringify(key), error: e instanceof Error ? e.message.slice(0, 300) : String(e) })
+    report.notes.failedDocs.push({ collection, key: JSON.stringify(keys[0]), error: e instanceof Error ? e.message.slice(0, 300) : String(e) })
   } finally {
     active--
     waiters.shift()?.()
@@ -462,8 +524,9 @@ async function upsert(collection: Coll, key: Record<string, unknown>, data: Reco
 }
 
 const legacy = (i: Item) => ({ drupalNid: i.nids[0] ?? null, legacyPaths: i.legacyPaths })
-// Key by nid when the item has one; otherwise by the field that is unique for it.
-const keyFor = (i: Item, fallback: Record<string, unknown>) => (i.nids[0] ? { drupalNid: i.nids[0] } : fallback)
+// Key by nid when the item has one, then by the field that is unique for it: a doc seeded
+// without a nid (e.g. from a listing) may already hold the slug.
+const keyFor = (i: Item, fallback: Record<string, unknown>) => (i.nids[0] ? [{ drupalNid: i.nids[0] }, fallback] : [fallback])
 
 for (const p of limited.pages)
   pending.push(upsert('pages', keyFor(p, { path: p.path }), { title: p.title || p.slug, path: p.path, slug: p.slug, section: p.section, body: md(p), ...legacy(p) }))
@@ -548,7 +611,8 @@ for (const k of Object.keys(report.dropped)) report.dropped[k].sort((a, b) => a 
 
 fs.mkdirSync(path.join(ROOT, 'src/data'), { recursive: true })
 fs.writeFileSync(path.join(ROOT, 'src/data/redirects.json'), JSON.stringify(redirectList, null, 1) + '\n')
-fs.writeFileSync(path.join(ROOT, 'scripts/import/report.json'), JSON.stringify(report, null, 2) + '\n')
+// A --nids run only touches a few docs; its counts would misdescribe the import.
+if (!ONLY) fs.writeFileSync(path.join(ROOT, 'scripts/import/report.json'), JSON.stringify(report, null, 2) + '\n')
 console.log(
   JSON.stringify(
     {

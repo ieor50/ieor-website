@@ -16,13 +16,22 @@ const td = new TurndownService({
   emDelimiter: '_',
 })
 td.use(gfm)
-// Raw HTML tables are emitted by `keep` as outerHTML; cells were cleaned beforehand.
-td.keep((node) => node.nodeName === 'TABLE' && (node as HTMLElement).getAttribute('data-keep') === '1')
+// Raw HTML tables are emitted as outerHTML; cells were cleaned beforehand. A rule, not
+// `keep`: added rules outrank the GFM plugin's table rule, `keep` does not.
+td.addRule('keepTable', {
+  filter: (node) => node.nodeName === 'TABLE' && node.getAttribute('data-keep') === '1',
+  replacement: (_c, node) => `\n\n${(node as HTMLElement).outerHTML}\n\n`,
+})
+// Iframes stay raw (src/title only); the site's Markdown component embeds allowlisted hosts.
 td.addRule('iframe', {
   filter: 'iframe',
   replacement: (_c, node) => {
-    const src = (node as HTMLElement).getAttribute('src')
-    return src ? `\n\n[Embedded content](${src})\n\n` : ''
+    const el = node as HTMLElement
+    const src = el.getAttribute('src')
+    if (!src || !/^https?:/i.test(src)) return ''
+    const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+    const title = el.getAttribute('title')
+    return `\n\n<iframe src="${esc(src)}"${title ? ` title="${esc(title)}"` : ''}></iframe>\n\n`
   },
 })
 
@@ -41,6 +50,8 @@ export function toMarkdown(
 ): string {
   const $ = load(html, null, false)
   $('script, style, noscript, link, meta, form, input, button').remove()
+  // Drupal pages carried a desktop and a mobile copy of the same block, toggled by CSS we drop.
+  $('#content-mobile').remove()
   $('*')
     .contents()
     .filter((_, n) => n.type === 'comment')

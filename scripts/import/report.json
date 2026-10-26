@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-07T17:25:40.113Z",
+  "generatedAt": "2026-10-26T14:05:21.290Z",
   "limit": null,
   "crawl": {
     "files": 3245,
-    "nodeViews": 3222,
+    "nodeViews": 3207,
     "notNodeViews": [
       121,
       123,
@@ -31,27 +31,27 @@
   },
   "counts": {
     "pages": {
-      "items": 334,
+      "items": 314,
       "created": 0,
-      "updated": 334,
+      "updated": 314,
       "failed": 0
     },
     "people": {
       "items": 198,
-      "created": 48,
-      "updated": 147,
-      "failed": 3
+      "created": 0,
+      "updated": 198,
+      "failed": 0
     },
     "courses": {
       "items": 84,
-      "created": 18,
-      "updated": 66,
+      "created": 0,
+      "updated": 84,
       "failed": 0
     },
     "posts": {
-      "items": 1207,
-      "created": 17,
-      "updated": 1190,
+      "items": 1150,
+      "created": 0,
+      "updated": 1150,
       "failed": 0
     },
     "publications": {
@@ -63,14 +63,30 @@
   },
   "merged": {
     "publications": 472,
-    "courses": 4,
-    "people": 30
+    "courses": 1,
+    "people": 30,
+    "pages": 12,
+    "posts": 57
   },
-  "pruned": {
-    "pages": 158,
-    "people": 5
-  },
+  "pruned": {},
   "dropped": {
+    "superseded duplicate": [
+      48,
+      61,
+      163,
+      225,
+      1812,
+      1906,
+      1981,
+      1986,
+      1988,
+      2429,
+      2858,
+      2875,
+      2881,
+      2882,
+      2883
+    ],
     "listing page": [
       12,
       17,
@@ -295,7 +311,6 @@
     "junk page": [
       223,
       224,
-      225,
       226,
       227,
       229,
@@ -319,9 +334,7 @@
       1815,
       1841,
       1851,
-      1906,
       1930,
-      1986,
       1990,
       1991,
       2133,
@@ -342,7 +355,6 @@
       2482,
       2559,
       2672,
-      3140,
       3172,
       3261,
       3263,
@@ -1219,8 +1231,6 @@
       1755,
       1814,
       1922,
-      1980,
-      1981,
       1982,
       2103,
       2145,
@@ -1231,7 +1241,6 @@
       2565,
       2695,
       2779,
-      2875,
       2876,
       3055,
       3069,
@@ -1278,7 +1287,6 @@
       2397,
       2354,
       2351,
-      2213,
       2215,
       2182,
       2148,
@@ -1389,23 +1397,7 @@
         "error": "HTTP 404"
       }
     ],
-    "failedDocs": [
-      {
-        "collection": "people",
-        "key": "{\"drupalNid\":2894}",
-        "error": "The following field is invalid: slug"
-      },
-      {
-        "collection": "people",
-        "key": "{\"drupalNid\":1618}",
-        "error": "The following field is invalid: slug"
-      },
-      {
-        "collection": "people",
-        "key": "{\"drupalNid\":2384}",
-        "error": "The following field is invalid: slug"
-      }
-    ],
+    "failedDocs": [],
     "personalPagesNotImported": [
       "/~narayan",
       "/~nh",
@@ -1572,6 +1564,12 @@
         "path": "/misc/trip-to-mazgaon-sandhurst-road-and-masjid-17-oct-2021"
       },
       {
+        "nid": 3140,
+        "oldPath": "/node/3140",
+        "title": "Undergraduate Program Prospectus IEOR IIT Bombay",
+        "path": "/misc/undergraduate-program-prospectus-ieor-iit-bombay"
+      },
+      {
         "nid": 3251,
         "oldPath": "/node/3251",
         "title": "July-November 2024",
@@ -1652,8 +1650,8 @@
     ]
   },
   "media": {
-    "referenced": 916,
-    "available": 892
+    "referenced": 918,
+    "available": 894
   },
   "redirects": 8610
 }

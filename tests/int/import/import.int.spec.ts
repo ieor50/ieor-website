@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
 import { classify, pagePathFor, postKind } from '../../../scripts/import/classify'
-import { courseFields, findEmail, peopleFromListing, personFromProfile, publicationFields } from '../../../scripts/import/extract'
+import { courseFields, findEmail, peopleFromListing, personFromProfile, publicationFields, studentsByProgram } from '../../../scripts/import/extract'
 import { toMarkdown } from '../../../scripts/import/markdown'
 import { absolutize, parseNode } from '../../../scripts/import/parse'
 
@@ -103,6 +103,36 @@ describe('toMarkdown', () => {
     expect(md).toMatch(/<table>[\s\S]*colspan="6"/)
     expect(md).not.toMatch(/style=|data-keep/)
     expect(stats.htmlTables).toBeGreaterThan(0)
+  })
+
+  it('splits the students table per program, B.Tech first, newest batch first', () => {
+    const row = (n: string, r: string, p: string, y: string) => `<tr><td>${n}</td><td>${r}</td><td>${p}</td><td>${y}</td></tr>`
+    const md = toMarkdown(
+      studentsByProgram(`<select><option>-Any-</option></select><table id="myTable"><thead><tr><th>Name</th></tr></thead><tbody>${row('A', '1', 'M.Tech', '2025')}${row('B', '2', 'B.Tech', '2024')}${row('C', '3', 'B.Tech', '2026')}</tbody></table>`),
+    )
+    expect(md).not.toContain('Any-')
+    expect(md.indexOf('## B.Tech (2)')).toBeLessThan(md.indexOf('## M.Tech (1)'))
+    expect(md.indexOf('| C |')).toBeLessThan(md.indexOf('| B |'))
+  })
+
+  it('drops the duplicate mobile copy of a block', () => {
+    const v = '<iframe src="https://www.youtube.com/embed/x"></iframe>'
+    const md = toMarkdown(`<div id="content-desktop">${v}</div><div id="content-mobile">${v}</div>`)
+    expect(md.match(/<iframe/g)).toHaveLength(1)
+  })
+
+  it('keeps iframes as raw embeds with absolute src', () => {
+    const md = toMarkdown('<p><iframe width="560" style="x" src="//www.youtube.com/embed/abc" title="A &quot;b&quot;"></iframe></p>')
+    expect(md).toBe('<iframe src="https://www.youtube.com/embed/abc" title="A &quot;b&quot;"></iframe>')
+  })
+
+  it('keeps a complex table with a heading row as raw HTML (GFM must not flatten it)', () => {
+    const md = toMarkdown(
+      '<table><thead><tr><th colspan="2">SEM I</th><th colspan="2">SEM II</th></tr></thead>' +
+        '<tbody><tr><td>MA110</td><td>Linear Algebra &amp;<br>DE</td><td>CS101</td><td>6</td></tr></tbody></table>',
+    )
+    expect(md).toMatch(/^<table>[\s\S]*colspan="2"[\s\S]*<\/table>$/)
+    expect(md).not.toMatch(/\|/)
   })
 
   it('unwraps layout tables, drops empty paragraphs and nbsp, applies rewrites', () => {

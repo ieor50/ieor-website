@@ -234,3 +234,31 @@ export function publicationFields(n: ParsedNode) {
     abstract: spacedText(n.contentHtml) || undefined,
   }
 }
+
+const PROGRAM_ORDER = ['B.Tech', 'M.Tech', 'M.Sc', 'M.Sc-Ph.D', 'Ph.D', 'IDDDP']
+
+/**
+ * The old /students page is one JS-filtered table (Name, Roll Number, Program, Batch).
+ * Rebuild it as one table per program, newest batch first; the dead filter form is dropped.
+ */
+export function studentsByProgram(html: string): string {
+  const $ = load(html, null, false)
+  const groups = new Map<string, { name: string; roll: string; batch: string }[]>()
+  $('#myTable tbody tr').each((_, tr) => {
+    const td = $(tr).children('td')
+    if (td.length < 4) return
+    const program = td.eq(2).text().trim()
+    const row = { name: (td.eq(0).html() || '').trim(), roll: td.eq(1).text().trim(), batch: td.eq(3).text().trim() }
+    ;(groups.get(program) || groups.set(program, []).get(program)!).push(row)
+  })
+  if (!groups.size) return html
+  const rank = (p: string) => (PROGRAM_ORDER.indexOf(p) + 1 || 99)
+  return [...groups.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
+    .map(([program, rows]) => {
+      rows.sort((a, b) => b.batch.localeCompare(a.batch) || a.roll.localeCompare(b.roll))
+      const body = rows.map((r) => `<tr><td>${r.name}</td><td>${r.roll}</td><td>${r.batch}</td></tr>`).join('')
+      return `<h2>${program} (${rows.length})</h2><table><tr><th>Name</th><th>Roll number</th><th>Batch</th></tr>${body}</table>`
+    })
+    .join('')
+}
