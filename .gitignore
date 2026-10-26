@@ -60,3 +60,6 @@ node_modules/
 
 # crawl data never lives here
 /legacy/crawl/
+
+# Agent worktrees (full repo copies, including .env files)
+.claude/worktrees/
