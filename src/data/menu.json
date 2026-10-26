@@ -1,0 +1,207 @@
+[
+ {
+  "label": "About Us",
+  "href": "/about",
+  "children": [
+   {
+    "label": "Home",
+    "href": "/"
+   },
+   {
+    "label": "History",
+    "href": "/about/history"
+   },
+   {
+    "label": "Past News",
+    "href": "/news"
+   },
+   {
+    "label": "Past Announcements",
+    "href": "/news?kind=announcement"
+   }
+  ]
+ },
+ {
+  "label": "People",
+  "href": "/people",
+  "children": [
+   {
+    "label": "Faculty",
+    "href": "/people?category=faculty"
+   },
+   {
+    "label": "Postdoctoral Fellows",
+    "href": "/people?category=other"
+   },
+   {
+    "label": "Staff",
+    "href": "/people?category=staff"
+   },
+   {
+    "label": "Students",
+    "href": "/students"
+   },
+   {
+    "label": "Faculty Advisors",
+    "href": "/people/facultyadvisors"
+   },
+   {
+    "label": "IEOR Alumni",
+    "href": "/people/alumni"
+   },
+   {
+    "label": "Student Representatives",
+    "href": "/people/student-reps-26"
+   },
+   {
+    "label": "Award Winners",
+    "href": "/people/awards"
+   }
+  ]
+ },
+ {
+  "label": "Academics",
+  "href": "/academics",
+  "children": [
+   {
+    "label": "Ph.D.",
+    "href": "/academics/phd"
+   },
+   {
+    "label": "M.Sc.",
+    "href": "/academics/msc"
+   },
+   {
+    "label": "M.Sc-Ph.D.",
+    "href": "/academics/msc-phd"
+   },
+   {
+    "label": "M.Tech",
+    "href": "/academics/mtech"
+   },
+   {
+    "label": "B.Tech",
+    "href": "/academics/btech"
+   },
+   {
+    "label": "B.Tech Minor",
+    "href": "/academics/minor"
+   },
+   {
+    "label": "IDDDP",
+    "href": "/academics/idddp"
+   },
+   {
+    "label": "CEP",
+    "href": "/academics/cep"
+   },
+   {
+    "label": "Time Table",
+    "href": "/academics/timetable"
+   },
+   {
+    "label": "IEOR Courses",
+    "href": "/academics/courses"
+   },
+   {
+    "label": "IEOR Alumnus Endowment Awards",
+    "href": "/academics/award-info"
+   },
+   {
+    "label": "Downloadable Forms",
+    "href": "/resources/downloadable-forms-and-circulars"
+   }
+  ]
+ },
+ {
+  "label": "Admissions",
+  "href": "/admissions",
+  "children": [
+   {
+    "label": "Ph.D.",
+    "href": "/admissions/phd"
+   },
+   {
+    "label": "M.Sc.",
+    "href": "/admissions/msc"
+   },
+   {
+    "label": "M.Tech.",
+    "href": "/admissions/mtech"
+   },
+   {
+    "label": "B.Tech.",
+    "href": "/admissions/btech"
+   },
+   {
+    "label": "FAQ - Admissions",
+    "href": "/resources/faq/admissions"
+   }
+  ]
+ },
+ {
+  "label": "Research",
+  "href": "/research",
+  "children": [
+   {
+    "label": "Research Topics",
+    "href": "/research/research-topics"
+   },
+   {
+    "label": "Publications",
+    "href": "/research/publications"
+   },
+   {
+    "label": "Student Projects",
+    "href": "/research/student-projects"
+   },
+   {
+    "label": "Computing",
+    "href": "/research/comp"
+   }
+  ]
+ },
+ {
+  "label": "Opportunities",
+  "href": "/opportunities",
+  "children": [
+   {
+    "label": "Faculty Positions",
+    "href": "/opportunities/fac-openings"
+   },
+   {
+    "label": "Project Positions",
+    "href": "/opportunities/project-positions"
+   },
+   {
+    "label": "Corporate Visitors",
+    "href": "/opportunities/corporate"
+   },
+   {
+    "label": "Placements",
+    "href": "/opportunities/placements"
+   }
+  ]
+ },
+ {
+  "label": "Centres & Labs",
+  "children": [
+   {
+    "label": "TCAAI",
+    "href": "https://www.tcaai.iitb.ac.in/"
+   },
+   {
+    "label": "FedEx ALFA",
+    "href": "https://www.ieor.iitb.ac.in/fedexalfa/"
+   },
+   {
+    "label": "Rooms",
+    "href": "https://www.ieor.iitb.ac.in/mrbs/"
+   }
+  ]
+ },
+ {
+  "label": "Contact Us",
+  "href": "/contact"
+ }
+]

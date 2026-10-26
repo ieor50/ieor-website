@@ -5,6 +5,7 @@ import { cache } from 'react'
 
 import { Markdown } from '@/components/Markdown'
 import { PageHero } from '@/components/PageHero'
+import menu from '@/data/menu.json'
 import { pagePath } from '@/lib/paths'
 import { db, excerpt, segmentLabel } from '../_lib/data'
 
@@ -51,7 +52,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SectionPage({ params }: Props) {
   const segs = (await params).path.map(decodeURIComponent)
   const path = toPath(segs)
-  const { page, children } = await load(path)
+  const loaded = await load(path)
+  const { page } = loaded
+  // Sections in the old main menu list its curated links, not every page filed under them.
+  const curated = (menu as { href?: string; children?: { label: string; href?: string }[] }[]).find((m) => m.href === path)?.children
+  const children = curated
+    ? curated.map((c) => ({ id: c.label + c.href, title: c.label, href: c.href || '/' }))
+    : loaded.children.map((c) => ({ id: String(c.id), title: c.title, href: pagePath(c) }))
   if (!page && !children.length) notFound()
 
   const title = page?.title ?? segmentLabel(segs[segs.length - 1])
@@ -78,7 +85,7 @@ export default async function SectionPage({ params }: Props) {
               <ul className="link-list prose">
                 {children.map((c) => (
                   <li key={c.id}>
-                    <Link href={pagePath(c)}>{c.title}</Link>
+                    {c.href.startsWith('/') ? <Link href={c.href}>{c.title}</Link> : <a href={c.href}>{c.title}</a>}
                   </li>
                 ))}
               </ul>

@@ -18,4 +18,13 @@ describe('Markdown', () => {
     expect(out).not.toMatch(/<script|onerror|javascript:/i)
     expect(out).toContain('src="https://x/y.png"')
   })
+
+  it('embeds iframes from allowlisted hosts and links the rest', () => {
+    const yt = html('<iframe src="https://www.youtube.com/embed/abc" title="t"></iframe>')
+    expect(yt).toMatch(/<iframe[^>]*src="https:\/\/www.youtube.com\/embed\/abc"/)
+    const evil = html('<iframe src="https://evil.example/x"></iframe>')
+    expect(evil).not.toContain('<iframe')
+    expect(evil).toContain('href="https://evil.example/x"')
+    expect(html('<iframe src="javascript:alert(1)"></iframe>')).not.toMatch(/<iframe|javascript:/)
+  })
 })

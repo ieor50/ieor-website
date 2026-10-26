@@ -7,12 +7,6 @@ export function Header() {
       <a className="skip" href="#main">
         Skip to content
       </a>
-      <div className="utility">
-        <div className="wrap">
-          <span>Indian Institute of Technology Bombay</span>
-          <a href="https://www.iitb.ac.in/">iitb.ac.in</a>
-        </div>
-      </div>
       <header className="site-header">
         <div className="wrap header-inner">
           <Link className="brand" href="/" aria-label="IEOR IIT Bombay home">
@@ -28,9 +22,6 @@ export function Header() {
             </span>
           </Link>
           <Nav />
-          <a className="header-cta" href="mailto:office.ieor@iitb.ac.in">
-            Contact IEOR
-          </a>
         </div>
       </header>
     </>
